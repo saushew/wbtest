@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  nats:
+    container_name: nats-server
+    image: nats-streaming:latest
+    restart: always
+    ports:
+      - 4222:4222
+    networks:
+      - new
+
+  app:
+    container_name: app
+    build: ./
+    ports:
+      - 8000:8080
+    depends_on:
+      - migrate
+    networks:
+      - new
+
+  db:
+    container_name: db
+    restart: always
+    image: postgres:latest
+    networks:
+      - new
+    ports:
+      - 7557:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=qwerty
+      - POSTGRES_DB=wb_test
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres " ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    container_name: migrate
+    build: ./migrator
+    networks:
+      - new
+    command:
+      [
+        "-path",
+        "./migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable",
+        "up"
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  new:

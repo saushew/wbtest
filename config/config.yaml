@@ -1,0 +1,7 @@
+http:
+  port: ":8080"
+
+nats_straming:
+  cluster_id: "test-cluster"
+  client_id: "test_subscriber"
+  subject: "test_orders"
